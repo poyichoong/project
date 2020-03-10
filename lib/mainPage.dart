@@ -150,18 +150,18 @@ class MainPageState extends State<MainPage> {
                       return Container(
                         height: 100,
                         padding: EdgeInsets.all(10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            InkWell(
-                              onTap: () {
-                                Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => Comment(),
-                                    ));
-                              },
-                              child: Container(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Comment(),
+                                ));
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Container(
                                 child: Image.asset(
                                   'assets/images/icon.png',
                                 ),
@@ -171,36 +171,36 @@ class MainPageState extends State<MainPage> {
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                            ),
-                            SizedBox(
-                              width: 20,
-                            ),
-                            Expanded(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              SizedBox(
+                                width: 20,
+                              ),
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Text(
+                                      cookerList[index].name,
+                                      style: TextStyle(
+                                          fontSize: 20, color: Colors.black),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: 20,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: <Widget>[
                                   Text(
-                                    cookerList[index].name,
+                                    cookerList[index].address,
                                     style: TextStyle(
                                         fontSize: 20, color: Colors.black),
                                   ),
                                 ],
                               ),
-                            ),
-                            SizedBox(
-                              width: 20,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: <Widget>[
-                               Text(
-                                    cookerList[index].address,
-                                    style: TextStyle(
-                                        fontSize: 20, color: Colors.black),
-                                  ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -301,8 +301,6 @@ class MainPageState extends State<MainPage> {
     carouselSlider.nextPage(
         duration: Duration(seconds: 5), curve: Curves.decelerate);
   }
-
-
 }
 
 class CookerInfo {
