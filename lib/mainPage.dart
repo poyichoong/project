@@ -155,7 +155,7 @@ class MainPageState extends State<MainPage> {
                             Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => Comment(),
+                                  builder: (context) => Comment(phone: cookerList[index].phone,),
                                 ));
                           },
                           child: Row(
@@ -283,6 +283,7 @@ class MainPageState extends State<MainPage> {
         CookerInfo cooker = CookerInfo(
           name: data['name'],
           address: data['address'],
+          phone: data['phone'],
         );
         cookerList.add(cooker);
       }
@@ -304,6 +305,6 @@ class MainPageState extends State<MainPage> {
 }
 
 class CookerInfo {
-  String name, address;
-  CookerInfo({this.name, this.address});
+  String name, address, phone;
+  CookerInfo({this.name, this.address, this.phone});
 }

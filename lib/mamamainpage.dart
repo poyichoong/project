@@ -1,15 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:project/customerlist.dart';
 import 'package:project/main.dart';
 import 'package:project/menu.dart';
 import 'package:project/cookeracc.dart';
-
+import 'package:http/http.dart' as http;
 
 
 
 class Mamamainpage extends StatefulWidget {
-  Mamamainpage({Key key}) : super(key: key);
+  final String phone;
+  Mamamainpage({Key key, this.phone}) : super(key: key);
 
   @override
   _MamamainpageState createState() => _MamamainpageState();
@@ -17,14 +20,19 @@ class Mamamainpage extends StatefulWidget {
 
 class _MamamainpageState extends State<Mamamainpage> {
   ScrollController _scrollController = ScrollController();
+  String menuURL = "http://192.168.43.245/fyp/menu.php";
+  String detailURL = "http://192.168.43.245/fyp/detail.php";
   CarouselSlider carouselSlider;
   int _current = 0;
+  bool foodStatus, detailStatus;
   List imgList = [
     'assets/images/1.jpeg',
     'assets/images/2.jpg',
     'assets/images/3.jpg',
     'assets/images/mamacooklg.png',
   ];
+  List food = [];
+  List detail = [];
 
   List<T> map<T>(List list, Function handler) {
     List<T> result = [];
@@ -32,6 +40,15 @@ class _MamamainpageState extends State<Mamamainpage> {
       result.add(handler(i, list[i]));
     }
     return result;
+  }
+
+   @override
+  void initState() {
+    foodStatus = false;
+    detailStatus = false;
+    _getMenu();
+    _getDetail();
+    super.initState();
   }
 
   @override
@@ -149,33 +166,17 @@ class _MamamainpageState extends State<Mamamainpage> {
                       height: 60,
                       child: Column(
                         children: <Widget>[
+                         for (int i = 0; i < food.length; i++)
                           Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
                               Text(
                                 "Spicy Chicken",
                                 style: TextStyle(color: Colors.black),
-                              ),
+                              )
                             ],
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                "Sweet Beef",
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                "Spicy Beed",
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ],
-                          ),
+                          
                         ],
                       ),
                     ),
@@ -306,7 +307,30 @@ class _MamamainpageState extends State<Mamamainpage> {
       },
     );
   }
- 
+  void _getMenu() async {
+    http.post(menuURL, body: {
+      "cookerphone": widget.phone,
+    }).then((res) {
+      var list = json.decode(res.body);
+      print(list);
+      food = list;
+      setState(() {
+        foodStatus = true;
+      });
+    });
+  }
+  void _getDetail() async {
+    http.post(detailURL, body: {
+      "cookerphone": widget.phone,
+    }).then((res) {
+      var list = json.decode(res.body);
+      print(list);
+      detail = list;
+      setState(() {
+        detailStatus= true;
+      });
+    });
+  }
   void _account() {
     //  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Register(),));
     Navigator.pushReplacement(
@@ -318,5 +342,7 @@ class _MamamainpageState extends State<Mamamainpage> {
   
 }
 
-class Mamaacc {
-}
+// class DetailInfo {
+//   String price, delivery, date;
+//   DetailInfo({this.price,  this.delivery, this.date});
+// }

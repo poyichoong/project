@@ -3,24 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:project/approve.dart';
 import 'package:project/comment.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class Order extends StatefulWidget {
-  Order({Key key}) : super(key: key);
+  final String phone;
+  Order({Key key, this.phone}) : super(key: key);
 
   @override
   _OrderState createState() => _OrderState();
 }
 
 class _OrderState extends State<Order> {
-  final TextEditingController _commentcontroller = TextEditingController();
+  final TextEditingController _daycontroller = TextEditingController();
   final ScrollController controller = ScrollController();
+  String orderURL = "http://192.168.43.245/fyp/order.php";
   List data = ["1", "2", "3", "4", "5", "6"];
-  String _mySelection, _myChoice;
+  String _mySelection, _myChoice, date;
  
 
   @override
   void initState() {
+    date = "start Date";
     _mySelection = "1";
     super.initState();
   }
@@ -113,7 +117,7 @@ class _OrderState extends State<Order> {
                                     height: 30,
                                     padding: EdgeInsets.fromLTRB(5, 5, 0, 0),
                                     child: Text(
-                                      "Start Date",
+                                      date,
                                       style: TextStyle(
                                         fontSize: 14,
                                       ),
@@ -211,7 +215,7 @@ class _OrderState extends State<Order> {
                             child: TextField(
                               style:
                                   TextStyle(fontSize: 20, color: Colors.black),
-                              controller: _commentcontroller,
+                              controller: _daycontroller,
                               keyboardType: TextInputType.text,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
@@ -237,7 +241,7 @@ class _OrderState extends State<Order> {
                         ),
                         color: Colors.blueAccent,
                         textColor: Colors.white,
-                        onPressed: _submitDialogShow,
+                        onPressed: _submit,
                       ),
                     ],
                   ),
@@ -248,29 +252,43 @@ class _OrderState extends State<Order> {
     );
   }
 
-  
 
-  void _submitDialogShow() async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CupertinoAlertDialog(
-          title: Text("Submit Successful"),
-          content: Text("Your order is waiting for approval."),
-          actions: <Widget>[
-            FlatButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Approve(),
-                      ));
-                },
-                child: Text("Done"))
-          ],
+
+void _submit() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String phone = prefs.getString('phone');
+    http.post(orderURL, body: {
+      "startdate": date,
+      "person": _mySelection,
+      "day": _daycontroller.text,
+      "phone": phone,
+      "cooker_phone": widget.phone,
+    }).then((response) {
+      if (response.body == "success") {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CupertinoAlertDialog(
+              title: Text("Submit Successful"),
+              content: Text("Your have been order"),
+              actions: <Widget>[
+                FlatButton(
+                    onPressed: () {
+                     Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Approve(),
+                        ));  
+                    },
+                    child: Text("Done"))
+              ],
+            );
+          },
         );
-      },
-    );
+      }
+    }).catchError((err) {
+      print("error: " + err.toString());
+    });
   }
 
   void _showBottomSheet() {
@@ -346,7 +364,11 @@ class _OrderState extends State<Order> {
                             backgroundColor: Colors.transparent,
                             initialDateTime:
                                 DateFormat("yyyy-MM-dd").parse("2019-01-01"),
-                            onDateTimeChanged: (startDate) {},
+                            onDateTimeChanged: (startDate) {
+                              setState(() {
+                                date = startDate.toString().substring(0, 10);
+                              });
+                            },
                           ),
                         ),
                       ],
@@ -365,7 +387,7 @@ class _OrderState extends State<Order> {
     Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => Comment(),
+          builder: (context) => Comment(phone: widget.phone,),
         ));
   }
-}
+    }

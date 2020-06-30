@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:project/cooker.dart';
@@ -10,7 +12,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Comment extends StatefulWidget {
-  Comment({Key key}) : super(key: key);
+  final String phone;
+  Comment({Key key, this.phone}) : super(key: key);
 
   @override
   _CommentState createState() => _CommentState();
@@ -21,8 +24,10 @@ class _CommentState extends State<Comment> {
   final ScrollController controller = ScrollController();
   final ScrollController _scrollController = ScrollController();
   String feedbackURL = "http://192.168.43.245/fyp/feedback.php";
+  String feedbacklistURL = "http://192.168.43.245/fyp/feedbacklist.php";
   String _ranking;
-  bool star1, star2, star3;
+  List<CommentInfo> commentList = [];
+  bool star1, star2, star3, ready;
   CarouselSlider carouselSlider;
   int _current = 0;
   List imgList = [
@@ -45,6 +50,7 @@ class _CommentState extends State<Comment> {
     star1 = false;
     star2 = false;
     star3 = false;
+    _getData();
     super.initState();
   }
 
@@ -247,59 +253,96 @@ class _CommentState extends State<Comment> {
                 SizedBox(
                   height: 10,
                 ),
-                Container(
-                  height: 300,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemExtent: 100,
-                    scrollDirection: Axis.vertical,
-                    itemCount: 10,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        height: 100,
-                        padding: EdgeInsets.all(10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            Container(
+                (ready == false)
+                    ? Container()
+                    : Container(
+                        height: 300,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemExtent: 100,
+                          scrollDirection: Axis.vertical,
+                          itemCount: commentList.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Container(
                               height: 100,
-                              width: 100,
-                              child: Image.asset(
-                                'assets/images/icon.png',
-                              ),
-                            ),
-                            SizedBox(
-                              width: 20,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: <Widget>[
-                                    Image.asset(
-                                      'assets/images/no.png',
-                                      width: 20,
+                              padding: EdgeInsets.all(10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: <Widget>[
+                                  Container(
+                                    height: 100,
+                                    width: 100,
+                                    child: Image.asset(
+                                      'assets/images/icon.png',
                                     ),
-                                    Image.asset('assets/images/half.png',
-                                        width: 20),
-                                    Image.asset('assets/images/full.png',
-                                        width: 20),
-                                  ],
-                                ),
-                                SizedBox(height: 5),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: <Widget>[Text("data")],
-                                )
-                              ],
-                            ),
-                          ],
+                                  ),
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: <Widget>[
+                                      (commentList[index].ranking == "1")
+                                          ? Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: <Widget>[
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                  ],
+                                                )
+                                              ],
+                                            )
+                                          : (commentList[index].ranking == "2")
+                                              ? Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                  ],
+                                                )
+                                              : Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                    Image.asset(
+                                                        'assets/images/full.png',
+                                                        width: 20),
+                                                  ],
+                                                ),
+                                      SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(commentList[index].comment)
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
@@ -450,7 +493,7 @@ class _CommentState extends State<Comment> {
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Order(),
+                        builder: (context) => Order(phone: widget.phone,),
                       ));
                 },
                 child: Text("Done"))
@@ -467,6 +510,7 @@ class _CommentState extends State<Comment> {
       "phone": phone,
       "ranking": _ranking,
       "comment": _commentcontroller.text,
+      "cooker_phone": widget.phone,
     }).then((response) {
       if (response.body == "success") {
         showDialog(
@@ -478,7 +522,11 @@ class _CommentState extends State<Comment> {
               actions: <Widget>[
                 FlatButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MainPage(),
+                          ));
                     },
                     child: Text("Ok"))
               ],
@@ -555,6 +603,26 @@ class _CommentState extends State<Comment> {
     );
   }
 
+  void _getData() async {
+    http.post(feedbacklistURL, body: {
+      "cookerphone": widget.phone,
+    }).then((res) {
+      print(res.body);
+      var list = json.decode(res.body);
+      for (var data in list) {
+        CommentInfo comment = CommentInfo(
+          phone: data['phone'],
+          ranking: data['ranking'],
+          comment: data['comment'],
+        );
+        commentList.add(comment);
+      }
+      setState(() {
+        ready = true;
+      });
+    });
+  }
+
   void _onBackPressAppBar() {
     Navigator.pushReplacement(
         context,
@@ -562,4 +630,9 @@ class _CommentState extends State<Comment> {
           builder: (context) => MainPage(),
         ));
   }
+}
+
+class CommentInfo {
+  String phone, ranking, comment;
+  CommentInfo({this.phone, this.ranking, this.comment});
 }
